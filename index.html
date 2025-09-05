@@ -10,12 +10,18 @@
     <!-- Chosen Palette: Earthy Harmony -->
     <!-- Application Structure Plan: 本应用采用单页选项卡式布局（Dashboard-style），分为“行程概览”、“详细日程”、“行前清单”和“预算助手”四个核心模块。这种结构能让用户快速获取关键信息（概览），又能深入了解每日安排（日程），同时提供了实用的工具（清单、预算）。顶部导航栏实现了模块间的平滑切换，避免了页面刷新，提升了移动端的使用体验。选择这种结构是因为它逻辑清晰，将一个复杂的旅行计划分解为几个易于管理的部分，特别适合在自驾途中快速查阅。 -->
     <!-- Visualization & Content Choices: 
-        1. 行程概览: 使用动态统计卡片（HTML/CSS）展示核心数据（时长、里程等），目标是“告知”。交互：无。理由：直观展示旅行全貌。
+        1. 行程概览: 使用动态统计卡片（HTML/CSS）展示核心数据（时长、里程等），目标是“告知”。新增高德地图（Canvas）来可视化整个自驾路线。目标是“组织”地理信息。交互：地图可拖动、缩放，路线清晰。理由：比静态图片更直观，能清晰展示行程全貌。
         2. 预算助手: 使用Chart.js的甜甜圈图（Canvas）来可视化各项开销比例。目标是“组织”财务信息。交互：用户在输入框中更新花费，图表和总计会通过JS动态重绘。理由：比静态列表更能清晰地展示花费结构，互动性强。
         3. 详细日程: 采用可折叠的手风琴式卡片（HTML/JS）展示每一天的行程。目标是“组织”时间线。交互：点击日期标题可展开或收起当日详情。理由：默认收起状态使整体行程一目了然，避免信息过载，用户可以按需查看细节。
         4. 行前清单: 使用带交互功能的复选框列表（HTML/JS）。目标是“组织”物品。交互：用户可以点击勾选已准备好的物品，并通过JS切换“人类”和“爱犬”清单视图。理由：互动性强，增加了工具的实用性，分类视图使信息更有条理。
         -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '25d4a2c2dbe09aa4b57b027b96e3f54b', // ！！！请替换成您申请的安全密钥
+        };
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=您申请的Web端Key&plugin=AMap.Driving"></script>
     <style>
         body {
             font-family: 'Noto Sans SC', sans-serif;
@@ -47,6 +53,10 @@
         }
         .checklist-item input:checked + label .checkbox-icon svg {
             display: block;
+        }
+        #map-container {
+            border-radius: 0.5rem;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -89,6 +99,16 @@
                             <p class="text-sm text-gray-600">全程关爱萌宠</p>
                         </div>
                     </div>
+                 </div>
+
+                 <!-- 新增的地图模块 -->
+                 <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-l-4 border-amber-600 pl-4">行程路线图</h2>
+                    <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded-r-lg mb-4" role="alert">
+                      <p class="font-bold">重要提示</p>
+                      <p>地图功能需要配置API Key。请前往“高德开放平台”免费申请一个“Web端 (JS API)”类型的Key和安全密钥，并替换代码中对应的占位符才能正常显示路线。</p>
+                    </div>
+                    <div id="map-container" class="w-full h-80 md:h-96 rounded-lg shadow-inner"></div>
                  </div>
 
                  <div class="bg-white rounded-lg shadow-lg p-6">
@@ -277,6 +297,75 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // --- 地图初始化逻辑 ---
+            function initMap() {
+                // ！！！请务必替换成您自己的Key
+                const apiKey = "您申请的Web端Key"; 
+                const securityCode = "您申请的安全密钥";
+
+                const mapContainer = document.getElementById('map-container');
+                
+                // 检查用户是否已替换Key
+                if (apiKey.includes("您申请的") || apiKey === "" || securityCode.includes("您申请的") || securityCode === "") {
+                    mapContainer.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 rounded-lg p-4 text-center">
+                            <p>请在HTML代码头部的 &lt;script&gt; 标签中<br/>配置您自己的高德地图API Key和安全密钥以显示地图。</p>
+                        </div>`;
+                    return;
+                }
+
+                // 更新安全配置
+                window._AMapSecurityConfig.securityJsCode = securityCode;
+
+                const map = new AMap.Map('map-container', {
+                    zoom: 6,
+                    center: [114.50, 40.82], // 中心点设在乌兰察布附近
+                    viewMode: '2D',
+                });
+
+                const driving = new AMap.Driving({
+                    map: map,
+                    policy: AMap.DrivingPolicy.LEAST_TIME,
+                    showTraffic: false,
+                    hideMarkers: false
+                });
+
+                const startPoint = { keyword: '北京市', city: '010' };
+                const endPoint = { keyword: '北京市', city: '010' };
+                const waypoints = [
+                    { keyword: '乌兰察布市', city: '0474' },
+                    { keyword: '乌兰哈达火山地质公园', city: '0474' },
+                    { keyword: '辉腾锡勒草原旅游区', city: '0474' },
+                    { keyword: '呼和浩特市', city: '0471' }
+                ];
+
+                driving.search(startPoint, endPoint, { waypoints: waypoints }, function(status, result) {
+                    if (status === 'complete') {
+                        // 路线绘制成功
+                    } else {
+                        console.error('获取驾车数据失败：' + JSON.stringify(result));
+                        mapContainer.innerHTML = `
+                            <div class="w-full h-full flex items-center justify-center bg-gray-200 text-red-500 rounded-lg p-4 text-center">
+                                <p>地图路线加载失败。<br/>错误: ${result.info || JSON.stringify(result)}</p>
+                            </div>`;
+                    }
+                });
+            }
+            
+            // 确保高德地图API加载完成后再执行初始化
+            if (typeof AMap !== "undefined") {
+                 initMap();
+            } else {
+                // 如果API还没加载好，做一个简单的轮询检查
+                let checkInterval = setInterval(function() {
+                    if (typeof AMap !== "undefined" && typeof AMap.Driving !== "undefined") {
+                        clearInterval(checkInterval);
+                        initMap();
+                    }
+                }, 500);
+            }
+
+            // --- 以下是原有的其他JS逻辑 ---
             const tabs = document.querySelectorAll('.tab-btn');
             const sections = document.querySelectorAll('.content-section');
 
