@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>京蒙草原奇遇记 - 4人3犬自驾攻略</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: 本应用采用单页选项卡式布局（Dashboard-style），分为“行程概览”、“详细日程”、“行前清单”和“预算助手”四个核心模块。这种结构能让用户快速获取关键信息（概览），又能深入了解每日安排（日程），同时提供了实用的工具（清单、预算）。顶部导航栏实现了模块间的平滑切换，避免了页面刷新，提升了移动端的使用体验。选择这种结构是因为它逻辑清晰，将一个复杂的旅行计划分解为几个易于管理的部分，特别适合在自驾途中快速查阅。 -->
+    <!-- Visualization & Content Choices: 
+        1. 行程概览: 使用动态统计卡片（HTML/CSS）展示核心数据（时长、里程等），目标是“告知”。交互：无。理由：直观展示旅行全貌。
+        2. 预算助手: 使用Chart.js的甜甜圈图（Canvas）来可视化各项开销比例。目标是“组织”财务信息。交互：用户在输入框中更新花费，图表和总计会通过JS动态重绘。理由：比静态列表更能清晰地展示花费结构，互动性强。
+        3. 详细日程: 采用可折叠的手风琴式卡片（HTML/JS）展示每一天的行程。目标是“组织”时间线。交互：点击日期标题可展开或收起当日详情。理由：默认收起状态使整体行程一目了然，避免信息过载，用户可以按需查看细节。
+        4. 行前清单: 使用带交互功能的复选框列表（HTML/JS）。目标是“组织”物品。交互：用户可以点击勾选已准备好的物品，并通过JS切换“人类”和“爱犬”清单视图。理由：互动性强，增加了工具的实用性，分类视图使信息更有条理。
+        -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .tab-active {
+            border-bottom: 2px solid #D97706;
+            color: #D97706;
+            font-weight: 500;
+        }
+        .tab-inactive {
+            color: #71717A;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .checklist-item input:checked + label .checkbox-icon {
+            background-color: #D97706;
+            border-color: #D97706;
+        }
+        .checklist-item input:checked + label .checkbox-icon svg {
+            display: block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">京蒙草原奇遇记 🚗💨</h1>
+            <p class="text-lg text-gray-600 mt-2">为四位旅人和三只萌犬定制的专属自驾攻略</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button data-tab="overview" class="tab-btn px-6 py-3 text-sm md:text-base tab-active">行程概览</button>
+            <button data-tab="itinerary" class="tab-btn px-6 py-3 text-sm md:text-base tab-inactive">详细日程</button>
+            <button data-tab="checklist" class="tab-btn px-6 py-3 text-sm md:text-base tab-inactive">行前清单</button>
+            <button data-tab="budget" class="tab-btn px-6 py-3 text-sm md:text-base tab-inactive">预算助手</button>
+        </nav>
+
+        <main>
+            <!-- 行程概览 -->
+            <section id="overview" class="content-section active">
+                 <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-l-4 border-amber-600 pl-4">核心信息</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="bg-amber-50 p-4 rounded-lg">
+                            <p class="text-2xl font-bold text-amber-700">3.5天</p>
+                            <p class="text-sm text-gray-600">总时长</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-2xl font-bold text-green-700">~1200公里</p>
+                            <p class="text-sm text-gray-600">预计总里程</p>
+                        </div>
+                        <div class="bg-sky-50 p-4 rounded-lg">
+                            <p class="text-2xl font-bold text-sky-700">草原&火山</p>
+                            <p class="text-sm text-gray-600">核心风光</p>
+                        </div>
+                        <div class="bg-rose-50 p-4 rounded-lg">
+                            <p class="text-2xl font-bold text-rose-700">🐾 宠物友好</p>
+                            <p class="text-sm text-gray-600">全程关爱萌宠</p>
+                        </div>
+                    </div>
+                 </div>
+
+                 <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-l-4 border-amber-600 pl-4">爱犬同行特别提示</h2>
+                    <p class="mb-4 text-gray-700">
+                        本次旅程欢迎毛茸茸的家庭成员！为了确保狗狗们的安全与舒适，以及我们旅途的顺利，请务必关注以下几点。我们将全程选择允许宠物进入的住宿和大部分时间的户外活动，让它们也能尽情享受大自然的辽阔。
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><span class="font-semibold">住宿确认：</span>出行前务必再次电话联系预订的酒店或蒙古包，确认宠物入住政策，避免临时变动。</li>
+                        <li><span class="font-semibold">行车安全：</span>为狗狗准备车载安全带、航空箱或宠物安全座椅，确保急刹车时的安全。</li>
+                        <li><span class="font-semibold">饮食习惯：</span>尽量携带狗狗平时吃的狗粮和零食，避免更换食物导致肠胃不适。草原地区温差大，保证充足饮水。</li>
+                        <li><span class="font-semibold">文明出游：</span>在景区和公共区域，请务必使用牵引绳。随时准备好拾便袋，做负责任的铲屎官。</li>
+                         <li><span class="font-semibold">身份证明：</span>携带狗狗的免疫证明，以备不时之需。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 详细日程 -->
+            <section id="itinerary" class="content-section">
+                <div class="space-y-4">
+                    <!-- Day 1 -->
+                    <div class="bg-white rounded-lg shadow-lg">
+                        <button class="accordion-header w-full text-left p-5 flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">第一天 (周五)：星夜兼程，初抵草原明珠</h3>
+                            <span class="text-2xl text-amber-600 transform transition-transform duration-300">▾</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-gray-200 text-gray-700">
+                                <p class="mb-2"><strong>📍 路线:</strong> 北京市区 → 京藏高速 → 乌兰察布市</p>
+                                <p class="mb-2"><strong>🚗 里程:</strong> 约 330 公里 | <strong>预计用时:</strong> 约 4-4.5 小时</p>
+                                <ul class="list-disc list-inside space-y-3 mt-4">
+                                    <li><strong>19:00 - 出发：</strong>加满油，从北京出发。晚高峰可能刚过，但仍建议预留充足时间。</li>
+                                    <li><strong>21:00 - 途中简餐：</strong>可在途经的河北怀来或张家口服务区解决晚餐，方便快捷，也让狗狗们下车活动一下。</li>
+                                    <li><strong>23:30 - 抵达乌兰察布：</strong>抵达酒店，办理入住。推荐选择<span class="font-semibold">允许携带宠物</span>的酒店，如“乌兰察布博源蓝海国际大饭店”或一些宠物友好型民宿（请务必提前电话确认）。</li>
+                                    <li><strong>深夜：</strong>安顿好后，带狗狗在酒店附近人少的地方散步，然后早点休息，为第二天的火山草原之旅储备精力。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Day 2 -->
+                    <div class="bg-white rounded-lg shadow-lg">
+                        <button class="accordion-header w-full text-left p-5 flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">第二天 (周六)：火山奇景与草原日落</h3>
+                            <span class="text-2xl text-amber-600 transform transition-transform duration-300">▾</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-gray-200 text-gray-700">
+                                <p class="mb-2"><strong>📍 路线:</strong> 乌兰察布市区 → 乌兰哈达火山地质公园 → 辉腾锡勒草原</p>
+                                <p class="mb-2"><strong>🚗 里程:</strong> 约 200 公里 | <strong>预计用时:</strong> 约 3 小时 (不含游玩)</p>
+                                <ul class="list-disc list-inside space-y-3 mt-4">
+                                    <li><strong>08:30 - 早餐与出发：</strong>在酒店或市区用完早餐后，驾车前往乌兰哈达火山群。</li>
+                                    <li><strong>10:00 - 探索火山公园：</strong>这里是绝佳的户外徒步和拍照圣地，狗狗们可以尽情撒欢。建议重点游览<span class="font-semibold">3号、5号和6号火山</span>，开发相对完善，也适合拍照。可以和狗狗一起爬上火山口，感受“地球的疤痕”的壮丽。</li>
+                                    <li><strong>13:00 - 午餐：</strong>在察哈尔右翼后旗的镇上解决午餐，品尝地道的蒙餐，如手把肉、莜面等。许多餐厅有外摆座位，方便照顾狗狗。</li>
+                                    <li><strong>15:00 - 前往辉腾锡勒：</strong>驱车前往辉腾锡勒草原，这里是典型的高山草甸草原。</li>
+                                    <li><strong>16:30 - 入住草原蒙古包：</strong>选择一家<span class="font-semibold">宠物友好的蒙古包度假村</span>，体验草原住宿。安顿好后，可以带狗狗在广阔的草原上奔跑。</li>
+                                    <li><strong>18:30 - 草原日落与晚餐：</strong>欣赏壮丽的草原日落。晚上参加度假村的篝火晚会，品尝烤全羊（需提前预订），在星空下感受蒙古族的热情。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Day 3 -->
+                    <div class="bg-white rounded-lg shadow-lg">
+                        <button class="accordion-header w-full text-left p-5 flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">第三天 (周日)：草原晨曦，转战青城</h3>
+                            <span class="text-2xl text-amber-600 transform transition-transform duration-300">▾</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-gray-200 text-gray-700">
+                                <p class="mb-2"><strong>📍 路线:</strong> 辉腾锡勒草原 → 呼和浩特市区</p>
+                                <p class="mb-2"><strong>🚗 里程:</strong> 约 130 公里 | <strong>预计用时:</strong> 约 2 小时</p>
+                                <ul class="list-disc list-inside space-y-3 mt-4">
+                                    <li><strong>05:30 - 观草原日出 (可选)：</strong>早起感受草原的宁静与第一缕阳光。</li>
+                                    <li><strong>08:00 - 草原活动与早餐：</strong>早餐后，可以在草原上体验骑马等活动（请确认是否可以带狗或轮流看管），或者悠闲地散步拍照。</li>
+                                    <li><strong>11:00 - 出发前往呼和浩特：</strong>整理行装，告别草原，驱车前往内蒙古首府——“青城”呼和浩特。</li>
+                                    <li><strong>13:00 - 呼市午餐：</strong>抵达后，在市区品尝正宗的烧麦或蒙餐。</li>
+                                    <li><strong>15:00 - 城市漫步：</strong>下午可以去<span class="font-semibold">塞上老街</span>逛逛，感受历史气息。这里是开放式街区，方便带宠物同行。可以逛逛特色小店，购买一些当地特产。</li>
+                                    <li><strong>18:00 - 晚餐与入住：</strong>在呼市找一家有特色的宠物友好餐厅。之后入住市区酒店，为第二天返程做准备。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Day 4 -->
+                    <div class="bg-white rounded-lg shadow-lg">
+                        <button class="accordion-header w-full text-left p-5 flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">第四天 (周一)：悠闲返程，满载而归</h3>
+                            <span class="text-2xl text-amber-600 transform transition-transform duration-300">▾</span>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-gray-200 text-gray-700">
+                                <p class="mb-2"><strong>📍 路线:</strong> 呼和浩特市区 → 北京市区</p>
+                                <p class="mb-2"><strong>🚗 里程:</strong> 约 500 公里 | <strong>预计用时:</strong> 约 6-7 小时</p>
+                                <ul class="list-disc list-inside space-y-3 mt-4">
+                                    <li><strong>09:00 - 自然醒与早餐：</strong>旅途最后一天，可以睡个懒觉，悠闲地用个早餐。</li>
+                                    <li><strong>10:30 - 最后采购：</strong>可以去当地超市或特产店购买一些牛肉干、奶制品等伴手礼。</li>
+                                    <li><strong>12:00 - 午餐后返程：</strong>在呼市用完午餐，加满油，开始返京。</li>
+                                    <li><strong>16:00 - 途中休息：</strong>在服务区休息，让人和狗都放松一下。</li>
+                                    <li><strong>19:00-20:00 - 抵达北京：</strong>预计在晚上8点前抵达北京，留出充足的时间去加油和还车。</li>
+                                    <li><strong>21:00前 - 完美收官：</strong>顺利还车，结束愉快的京蒙草原之旅！</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 行前清单 -->
+            <section id="checklist" class="content-section">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-center mb-6">
+                        <button id="human-checklist-btn" class="px-6 py-2 bg-amber-600 text-white rounded-l-md font-semibold">人类清单</button>
+                        <button id="dog-checklist-btn" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-r-md">爱犬清单</button>
+                    </div>
+
+                    <div id="human-checklist" class="space-y-3">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">人类必备</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                           <div class="checklist-item"><input type="checkbox" id="c1" class="hidden"><label for="c1" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>身份证、驾驶证、行驶证</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c2" class="hidden"><label for="c2" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>少量现金</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c3" class="hidden"><label for="c3" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>手机、充电器、充电宝</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c4" class="hidden"><label for="c4" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>冲锋衣/厚外套（草原温差大）</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c5" class="hidden"><label for="c5" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>舒适的鞋、换洗衣物</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c6" class="hidden"><label for="c6" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>防晒霜、太阳镜、帽子</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c7" class="hidden"><label for="c7" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>个人洗漱用品、护肤品</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="c8" class="hidden"><label for="c8" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>常用药品（感冒、肠胃、创可贴）</label></div>
+                        </div>
+                    </div>
+                    
+                    <div id="dog-checklist" class="hidden space-y-3">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">爱犬必备</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                           <div class="checklist-item"><input type="checkbox" id="d1" class="hidden"><label for="d1" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>足量狗粮和零食</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d2" class="hidden"><label for="d2" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>饮水盆、便携水壶</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d3" class="hidden"><label for="d3" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>牵引绳、胸背带</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d4" class="hidden"><label for="d4" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>拾便袋</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d5" class="hidden"><label for="d5" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>车载安全用品（安全绳/航空箱）</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d6" class="hidden"><label for="d6" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>狗狗的床/垫子、小玩具</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d7" class="hidden"><label for="d7" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>宠物湿巾、毛巾</label></div>
+                           <div class="checklist-item"><input type="checkbox" id="d8" class="hidden"><label for="d8" class="flex items-center cursor-pointer"><span class="checkbox-icon w-5 h-5 mr-3 border-2 border-gray-300 rounded-sm flex items-center justify-center"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>狗狗免疫证明复印件</label></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 预算助手 -->
+            <section id="budget" class="content-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-l-4 border-amber-600 pl-4">费用估算</h2>
+                         <p class="text-gray-600 mb-6">这是一个大致的费用估算器（4人总费用），您可以在下方输入实际花费来动态更新图表和总计。</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="fuel" class="text-sm font-medium text-gray-700">交通费 (油费+过路费)</label>
+                                <input type="number" id="fuel" value="1000" class="budget-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label for="accommodation" class="text-sm font-medium text-gray-700">住宿费</label>
+                                <input type="number" id="accommodation" value="1500" class="budget-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label for="food" class="text-sm font-medium text-gray-700">餐饮费</label>
+                                <input type="number" id="food" value="1200" class="budget-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label for="tickets" class="text-sm font-medium text-gray-700">门票/活动</label>
+                                <input type="number" id="tickets" value="800" class="budget-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label for="others" class="text-sm font-medium text-gray-700">其他开销</label>
+                                <input type="number" id="others" value="500" class="budget-input mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
+                        <div class="chart-container w-full max-w-sm h-64 md:h-80">
+                            <canvas id="budgetChart"></canvas>
+                        </div>
+                        <div class="text-center mt-6">
+                            <p class="text-gray-600">预计总花费</p>
+                            <p id="total-budget" class="text-4xl font-bold text-amber-700">¥5000</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const sections = document.querySelectorAll('.content-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => {
+                        item.classList.add('tab-inactive');
+                        item.classList.remove('tab-active');
+                    });
+                    tab.classList.add('tab-active');
+                    tab.classList.remove('tab-inactive');
+
+                    const target = tab.getAttribute('data-tab');
+                    sections.forEach(section => {
+                        if (section.id === target) {
+                            section.classList.add('active');
+                        } else {
+                            section.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            const accordions = document.querySelectorAll('.accordion-header');
+            accordions.forEach(accordion => {
+                accordion.addEventListener('click', () => {
+                    const content = accordion.nextElementSibling;
+                    const icon = accordion.querySelector('span');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            const humanBtn = document.getElementById('human-checklist-btn');
+            const dogBtn = document.getElementById('dog-checklist-btn');
+            const humanList = document.getElementById('human-checklist');
+            const dogList = document.getElementById('dog-checklist');
+
+            humanBtn.addEventListener('click', () => {
+                humanList.style.display = 'block';
+                dogList.style.display = 'none';
+                humanBtn.classList.add('bg-amber-600', 'text-white');
+                humanBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                dogBtn.classList.add('bg-gray-200', 'text-gray-700');
+                dogBtn.classList.remove('bg-amber-600', 'text-white');
+            });
+
+            dogBtn.addEventListener('click', () => {
+                humanList.style.display = 'none';
+                dogList.style.display = 'block';
+                dogBtn.classList.add('bg-amber-600', 'text-white');
+                dogBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                humanBtn.classList.add('bg-gray-200', 'text-gray-700');
+                humanBtn.classList.remove('bg-amber-600', 'text-white');
+            });
+            
+            const budgetInputs = document.querySelectorAll('.budget-input');
+            const totalBudgetElement = document.getElementById('total-budget');
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            let budgetChart;
+            
+            const chartData = {
+                labels: ['交通', '住宿', '餐饮', '门票/活动', '其他'],
+                datasets: [{
+                    data: [1000, 1500, 1200, 800, 500],
+                    backgroundColor: ['#38BDF8', '#34D399', '#FBBF24', '#F87171', '#A78BFA'],
+                    borderColor: '#FDFBF8',
+                    borderWidth: 4,
+                    hoverOffset: 8
+                }]
+            };
+
+            const chartConfig = {
+                type: 'doughnut',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                boxWidth: 12,
+                                font: {
+                                    family: "'Noto Sans SC', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            function updateChart() {
+                let total = 0;
+                const newData = [];
+                
+                budgetInputs.forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    total += value;
+                    newData.push(value);
+                });
+
+                totalBudgetElement.textContent = `¥${total.toLocaleString()}`;
+                budgetChart.data.datasets[0].data = newData;
+                budgetChart.update();
+            }
+
+            budgetChart = new Chart(ctx, chartConfig);
+
+            budgetInputs.forEach(input => {
+                input.addEventListener('input', updateChart);
+            });
+        });
+    </script>
+</body>
+</html>
